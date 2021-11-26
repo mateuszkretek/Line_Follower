@@ -1,10 +1,10 @@
-import time
-
 from machine import PWM
 from machine import Pin
+import time
 
 led = Pin(25, Pin.OUT)
-stby_engine = Pin(12, Pin.OUT)
+standby_engine = Pin(12, Pin.OUT)
+
 ina1 = Pin(13, Pin.OUT)
 ina2 = Pin(14, Pin.OUT)
 pwm_a = PWM(Pin(15))
@@ -14,8 +14,10 @@ inb2 = Pin(17, Pin.OUT)
 pwm_b = PWM(Pin(16))
 
 pwm_a.freq(1000)
+pwm_b.freq(1000)
 
 led(1)
+standby_engine(1)
 
 
 def right_engine_forward(duty):
@@ -41,7 +43,7 @@ def stop_engine():
 	pwm_b.duty_u16(0)
 
 
-def test(port):
+def sensor_test_with_counter(port):
 	counter = 0
 	input_sensor = Pin(port, Pin.OUT)
 	input_sensor(1)
@@ -50,17 +52,29 @@ def test(port):
 		counter = counter+1
 	return counter
 
+
+def sensor_test_with_time(port):
+	input_sensor = Pin(port, Pin.OUT)
+	input_sensor(1)
+	pulse_start = time.time()
+	input_sensor.init(Pin.IN, Pin.PULL_DOWN)
+	while input_sensor.value() > 0:
+		pass
+	if input_sensor.value() == 0:
+		pulse_end = time.time()
+	pulse_duration = pulse_end - pulse_start
+	print(pulse_duration)
+	
+
 while True:
-	#stby_engine(1)
-	#input_sensor.value(1)
-	#right_engine_forward(50)
-	#left_engine_forward(40)
-	#time.sleep(1)
-	#stop_engine()
-	#time.sleep(2)
-	#print("19", test(19))
-	#print("20", test(20))
-	#print("21", test(21))
-	print(test(19))
-	time.sleep(1)
+	if sensor_test_with_counter(20) > 2:
+		stop_engine()
+		left_engine_forward(40)
+		right_engine_forward(40)
+	if sensor_test_with_counter(19) > 2:
+		stop_engine()
+		left_engine_forward(40)
+	if sensor_test_with_counter(21) > 2:
+		stop_engine()
+		right_engine_forward(40)
 	
